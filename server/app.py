@@ -61,36 +61,7 @@ class NewsletterById(Resource):
             jsonify(response_dict),
             200
         )
-        return response
-    
-    def patch(self, id):
-        record = Newsletter.query.filter_by(id = id).first()
-        for attr in request.form:
-            setattr(record, attr, request.form[attr])
-        db.session.add(record)
-        db.session.commit()
-
-        response_dict = record.to_dict()
-        response = make_response(
-            jsonify(response_dict),
-            200
-        )
-        return response
-    
-    def delete(self, id):
-        record = Newsletter.query.filter_by(id = id).first()
-        db.session.delete(record)
-        db.session.commit()
-
-        response_body = {
-            "deleted_successful": True,
-            "message": "record deleted successfuly."
-        }
-        response = make_response(
-            jsonify(response_body),
-            200
-        )
-        return response
+        return response   
 
 api.add_resource(NewsletterById, "/newsletters/<int:id>")
 
