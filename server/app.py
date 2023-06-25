@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 
@@ -16,8 +16,83 @@ db.init_app(app)
 
 api = Api(app)
 
-class Home(Resource):
-    pass
+class Index(Resource):
+    def get(self):
+        response_dict = {
+            "index": "Welcome to the Newsletter RESTful API."
+        }
+        response = make_response(
+            jsonify(response_dict),
+            200
+        )
+        return response
+api.add_resource(Index, "/")
+
+class Newsletters(Resource):
+    def get(self):
+        newsletter_dict = [newsletter.to_dict() for newsletter in Newsletter.query.all()]
+        response = make_response(
+            jsonify(newsletter_dict),
+            200
+        )
+        return response
+    
+    def post(self):
+        new_record = Newsletter(
+            title = request.form.get("title"),
+            body = request.form.get("body")
+        )
+        db.session.add(new_record)
+        db.session.commit()
+
+        response_dict = new_record.to_dict()
+        response = make_response(
+            jsonify(response_dict),
+            200
+        )
+        return response
+api.add_resource(Newsletters, "/newsletters")
+
+class NewsletterById(Resource):
+    def get(self, id):
+        response_dict = Newsletter.query.filter_by(id = id).first().to_dict()
+
+        response = make_response(
+            jsonify(response_dict),
+            200
+        )
+        return response
+    
+    def patch(self, id):
+        record = Newsletter.query.filter_by(id = id).first()
+        for attr in request.form:
+            setattr(record, attr, request.form[attr])
+        db.session.add(record)
+        db.session.commit()
+
+        response_dict = record.to_dict()
+        response = make_response(
+            jsonify(response_dict),
+            200
+        )
+        return response
+    
+    def delete(self, id):
+        record = Newsletter.query.filter_by(id = id).first()
+        db.session.delete(record)
+        db.session.commit()
+
+        response_body = {
+            "deleted_successful": True,
+            "message": "record deleted successfuly."
+        }
+        response = make_response(
+            jsonify(response_body),
+            200
+        )
+        return response
+
+api.add_resource(NewsletterById, "/newsletters/<int:id>")
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
